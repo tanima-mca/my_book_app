@@ -1,7 +1,8 @@
 // middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifyToken } from "./lib/jwt";
+import { verifyToken } from "./lib/generated/prisma/jwt";
+
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get("token")?.value;
