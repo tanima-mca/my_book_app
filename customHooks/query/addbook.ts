@@ -1,4 +1,6 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/generated/prisma/client";
+
+
 
 
 export async function addBook(title: string, desc: string, cover: string) {

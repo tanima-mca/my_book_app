@@ -36,7 +36,9 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import formidable, { Fields, Files } from 'formidable';
 import path from 'path';
 import fs from 'fs';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/generated/prisma/client';
+
+
 
 
 // Disable default Next.js body parser

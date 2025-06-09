@@ -70,8 +70,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { signToken } from "../../../lib/jwt";
+
 import { serialize } from "cookie";
+import { signToken } from "@/lib/generated/prisma/jwt";
+
 
 interface AuthRequestBody {
   action: "register" | "login";

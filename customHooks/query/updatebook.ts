@@ -1,4 +1,6 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/generated/prisma/client";
+
+
 
 
 // /my_nextapp/api/functions/bookinfo.ts
