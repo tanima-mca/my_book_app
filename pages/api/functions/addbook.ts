@@ -1,106 +1,71 @@
-// // /pages/api/addBook.ts
-// import { NextApiRequest, NextApiResponse } from "next";
-// import { PrismaClient } from "@prisma/client";
-
-// const prisma = new PrismaClient();
-
-// export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-//   if (req.method === "POST") {
-//     const { title, desc, cover } = req.body;
-
-//     if (!title || !desc || !cover) {
-//       return res.status(400).json({ error: "❌ All fields are required!" });
-//     }
-
-//     try {
-//       const newBook = await prisma.bookinfo.create({
-//         data: { title, desc, cover },
-//       });
-
-//       return res.status(201).json(newBook);
-//     } catch (error) {
-//       console.error("❌ Error adding book:", error);
-//       return res.status(500).json({ error: "Failed to add book!" });
-//     }
-//   } else {
-//     res.setHeader("Allow", ["POST"]);
-//     return res.status(405).json({ error: `Method ${req.method} not allowed` });
-//   }
-// }
-
-// pages/api/book/upload.ts
-
-import { NextApiRequest, NextApiResponse } from 'next';
-import formidable, { Fields, Files } from 'formidable';
-import fs from 'fs';
-import path from 'path';
-import { prisma } from '@/lib/prisma';
+// /api/functions/addbook.ts
+import type { NextApiRequest, NextApiResponse } from "next";
+import formidable from "formidable";
+import fs from "fs";
+import path from "path";
+import { prisma } from "@/lib/prisma";
 
 
-// Disable the default Next.js body parser
+// Turn off Next.js built-in body parser
 export const config = {
   api: {
     bodyParser: false,
   },
 };
 
-// Ensure uploads directory exists
-const uploadDir = path.join(process.cwd(), '/public/uploads/images');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+// Upload directory path
+const uploadDir = path.join(process.cwd(), "/public/uploads");
+fs.mkdirSync(uploadDir, { recursive: true });
 
-// Main handler
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
+// Helper to parse multipart/form-data
+const parseForm = (req: NextApiRequest): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
   const form = formidable({
-    uploadDir,
-    keepExtensions: true,
     multiples: false,
-    filename: (_name, _ext, part) => {
-      const ext = path.extname(part.originalFilename || '');
-      const name = path.basename(part.originalFilename || 'upload', ext);
-      return `${name}-${Date.now()}${ext}`;
-    },
+    keepExtensions: true,
+    uploadDir,
   });
 
-  const parseForm = (): Promise<{ fields: Fields; files: Files }> =>
-    new Promise((resolve, reject) => {
-      form.parse(req, (err, fields, files) => {
-        if (err) reject(err);
-        else resolve({ fields, files });
-      });
+  return new Promise((resolve, reject) => {
+    form.parse(req, (err, fields, files) => {
+      if (err) reject(err);
+      else resolve({ fields, files });
     });
+  });
+};
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method Not Allowed" });
+  }
 
   try {
-    const { fields, files } = await parseForm();
+    const { fields, files } = await parseForm(req);
 
     const title = Array.isArray(fields.title) ? fields.title[0] : fields.title;
     const desc = Array.isArray(fields.desc) ? fields.desc[0] : fields.desc;
+    const cover = Array.isArray(files.cover) ? files.cover[0] : files.cover;
 
-    const coverFile = files.cover;
-    const file = Array.isArray(coverFile) ? coverFile[0] : coverFile;
-
-    if (!title || !desc || !file) {
-      return res.status(400).json({ error: 'All fields are required' });
+    if (!title || !desc || !cover || !cover.filepath) {
+      return res.status(400).json({ error: "Missing title, description, or cover image." });
     }
 
-    const imagePath = `/uploads/images/${file.newFilename}`;
+    const coverUrl = `/uploads/${path.basename(cover.filepath)}`;
 
+    // ✅ Save to Prisma DB
     const newBook = await prisma.bookinfo.create({
       data: {
         title,
         desc,
-        cover: imagePath,
+        cover: coverUrl,
       },
     });
 
-    return res.status(201).json({ message: '✅ Book added successfully', book: newBook });
+    return res.status(200).json({
+      message: "✅ Book uploaded and saved to database successfully",
+      book: newBook,
+    });
   } catch (error) {
-    console.error('❌ Error handling form:', error);
-    return res.status(500).json({ error: 'Something went wrong' });
+    console.error("❌ Upload error:", error);
+    return res.status(500).json({ error: "❌ Internal server error" });
   }
 }

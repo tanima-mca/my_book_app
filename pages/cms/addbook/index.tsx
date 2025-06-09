@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Container,
   TextField,
@@ -27,6 +27,17 @@ export default function AddBookPage() {
   });
 
   const [error, setError] = useState<string>("");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (formData.cover) {
+      const objectUrl = URL.createObjectURL(formData.cover);
+      setPreviewUrl(objectUrl);
+      return () => URL.revokeObjectURL(objectUrl); // cleanup on unmount or change
+    } else {
+      setPreviewUrl(null);
+    }
+  }, [formData.cover]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, files } = e.target;
@@ -167,10 +178,10 @@ export default function AddBookPage() {
               />
             </Button>
 
-            {formData.cover && (
+            {previewUrl && (
               <Box sx={{ mt: 2, textAlign: "center" }}>
                 <Image
-                  src={URL.createObjectURL(formData.cover)}
+                  src={previewUrl}
                   alt="Cover Preview"
                   width={250}
                   height={350}

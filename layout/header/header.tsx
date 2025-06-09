@@ -81,8 +81,15 @@
 //     </>
 //   );
 // }
-
-import { AppBar, Toolbar, Typography, IconButton, Button } from "@mui/material";
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  IconButton,
+  Button,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useState } from "react";
 import LoginModal from "@/pages/auth/login";
@@ -98,48 +105,73 @@ export default function Header({ toggleSidebar }: HeaderProps) {
   const { isLoggedIn, login, logout } = useAuthStore();
   const router = useRouter();
 
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
+
   const handleLoginSuccess = () => {
-    login(); // Zustand login
-    setLoginModalOpen(false); // Close modal
+    login();
+    setLoginModalOpen(false);
   };
 
   const handleLogout = () => {
-    logout(); // Zustand logout
-    router.push("/"); // Redirect to home
+    logout();
+    router.push("/");
   };
 
   return (
     <>
       <AppBar position="fixed" sx={{ width: "100%" }}>
-        <Toolbar>
-          <IconButton edge="start" color="inherit" onClick={toggleSidebar}>
+        <Toolbar
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: 1,
+          }}
+        >
+          <IconButton edge="start" color="inherit" onClick={toggleSidebar} sx={{ mr: 1 }}>
             <MenuIcon />
           </IconButton>
 
-          <Typography component="span" fontSize="2.5rem">
+          <Typography component="span" fontSize={isSmallScreen ? "1.8rem" : "2.5rem"}>
             📚
           </Typography>
 
           <Typography
-            variant="h4"
+            variant={isSmallScreen ? "h6" : "h4"}
             fontWeight="bold"
             sx={{
               flexGrow: 1,
+              minWidth: 0,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
               background:
                 "linear-gradient(90deg, rgb(210, 253, 80) 0%, rgb(248, 57, 229) 60%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
+              userSelect: "none",
             }}
           >
             My Book Store DashBoard
           </Typography>
 
           {isLoggedIn ? (
-            <Button color="inherit" onClick={handleLogout}>
+            <Button
+              color="inherit"
+              onClick={handleLogout}
+              sx={{ whiteSpace: "nowrap" }}
+              size={isSmallScreen ? "small" : "medium"}
+            >
               🚪 Logout
             </Button>
           ) : (
-            <Button color="inherit" onClick={() => setLoginModalOpen(true)}>
+            <Button
+              color="inherit"
+              onClick={() => setLoginModalOpen(true)}
+              sx={{ whiteSpace: "nowrap" }}
+              size={isSmallScreen ? "small" : "medium"}
+            >
               🔑 Login
             </Button>
           )}
